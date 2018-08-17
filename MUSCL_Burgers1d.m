@@ -22,7 +22,7 @@ clear; clc; close all;
 cfl = 0.70;
 
 % Test cases
-test = 3;
+test = 1;
 switch test
     case 1
         Lx=1; nx=100; dx=Lx/nx; xc=dx/2:dx:Lx; range=[0,1,-0.25,1.25];
@@ -51,10 +51,10 @@ U=U0; time=0; iter=0; dt=dt0;
 while time < tEnd
     
     % Find Un+1 for 1st step
-    U_s = U + dt*MUSCL_Burgers(U,dx,nx);
+    U_s = U + dt*MUSCL_AdvecRes1d(U,dx,nx);
     
     % Find Un+2 for 2nd step
-    U_s2 = U_s + dt*MUSCL_Burgers(U_s,dx,nx);
+    U_s2 = U_s + dt*MUSCL_AdvecRes1d(U_s,dx,nx);
     
     % Corrector for 3rd step
     Un = 1/2*(U + U_s2);
@@ -79,4 +79,4 @@ U0=U0(2:nx-1); U=U(2:nx-1); nx=nx-2;
 %Plots results
 plot(xc,U0,'-b',xc, U,'or','MarkerSize',5); axis(range);
 xlabel('x'); ylabel('U'); legend('Exact', 'MUSCL');
-title('2nd Order R-K TVD-MUSCL Burgers` equation ')
+title('predictor-corrector RK2 TVD-MUSCL Burgers` Eq.')

@@ -61,7 +61,7 @@ nTRI=0; nQUAD=0;
 for e = 1:nE
     elem(e).nV = numel(EtoV{e});
     switch elem(e).nV
-        case 3; % Triangular element
+        case 3 % Triangular element
             nTRI =nTRI +1;
             elem(e).v(1) = EtoV{e}(1);
             elem(e).v(2) = EtoV{e}(2);
@@ -74,7 +74,7 @@ for e = 1:nE
             elem(e).x = (ax+bx+cx)/3;
             elem(e).y = (ay+by+cy)/3;
             elem(e).vol=Area;
-        case 4; % Quad element
+        case 4 % Quad element
             nQUAD=nQUAD+1;
             elem(e).v(1) = EtoV{e}(1);
             elem(e).v(2) = EtoV{e}(2);

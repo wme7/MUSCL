@@ -139,8 +139,8 @@ switch Etype
         %
         % Quad is defined by the counterclockwise ordering of nodes.
         e=1; % element counter
-        for i = 1:xE;
-            for j = 1:yE;
+        for i = 1:xE
+            for j = 1:yE
                 k = j+ny*(i-1); % dummy variable
                 EtoV{ e } = [k, ny+k,  ny+k+1, k+1];
                 e = e+1; % element counter
@@ -160,8 +160,8 @@ switch Etype
         %
         % Triangle is defined by the counterclockwise ordering of nodes.
         e=1; % element counter
-        for i = 1:xE;
-            for j = 1:yE;
+        for i = 1:xE
+            for j = 1:yE
                 k = j+ny*(i-1); % dummy variable
                 rn = rand;
                 if rn < 0.5
@@ -181,8 +181,8 @@ switch Etype
         midyE = (yE+1)/2; % xE is assumed odd number
         %
         e=1; % element counter
-        for i = 1:xE;
-            for j = 1:yE;
+        for i = 1:xE
+            for j = 1:yE
                 k = j+ny*(i-1); % dummy variable
                 if ((i<midxE) && (j<midyE)) || ((i>midxE) && (j>midyE))
                     rn = rand;
