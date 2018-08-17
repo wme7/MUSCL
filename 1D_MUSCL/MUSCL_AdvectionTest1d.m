@@ -21,9 +21,9 @@ for n=1:4
 %% Parameters
    nE = 0100;    % base number of cells;
    nx = nE*2^(n-1);	% actual number of cells
-  CFL = 0.20;	 % Courant Number;
+  CFL = 0.50;	 % Courant Number;
  tEnd = 2.00;    % End time;
-limiter ='MC';   % MC, MM, VA;
+limiter ='VA';   % MC, MM, VA;
 RKmethod='RK2';  % RK2, RK3.
 plotFigs= false; % plot figures
 
@@ -107,25 +107,25 @@ while t < tEnd
 end
 
 %% Post Process
-
-% Compute error norms
-ue=u0; err=abs(ue(:)-u(:)); % error measurements only valid for the linear test!
-L1 = dx*sum(abs(err)); fprintf('L_1 norm: %1.2e \n',L1);
-L2 = dx*(sum(err.^2))^0.5; fprintf('L_2 norm: %1.2e \n',L2);
-Linf = norm(err,inf); fprintf('L_inf norm: %1.2e \n',Linf);
-
-% Collect measurements for convergence
-Data(n).L1 = L1; %#ok<*SAGROW>
-Data(n).L2 = L2;
-Data(n).Linf=Linf;
-Data(n).dx = dx;
-Data(n).dt = dt;
-if n>1 
-    Data(n).rateL1Space=log(Data(n-1).L1/Data(n).L1)/log(Data(n-1).dx/Data(n).dx);
-    Data(n).rateL2Space=log(Data(n-1).L2/Data(n).L2)/log(Data(n-1).dx/Data(n).dx);
+if strcmp(fluxfun,'linear') % If linear test: compute error norms
+    ue=u0; err=abs(ue(:)-u(:));
+    L1 = dx*sum(abs(err)); fprintf('L_1 norm: %1.2e \n',L1);
+    L2 = (dx*sum(err.^2))^0.5; fprintf('L_2 norm: %1.2e \n',L2);
+    Linf = norm(err,inf); fprintf('L_inf norm: %1.2e \n',Linf);
+    
+    % Collect measurements for convergence
+    Data(n).L1 = L1; %#ok<*SAGROW>
+    Data(n).L2 = L2;
+    Data(n).Linf=Linf;
+    Data(n).dx = dx;
+    Data(n).dt = dt;
+    if n>1
+        Data(n).rateL1=log(Data(n-1).L1/Data(n).L1)/log(Data(n-1).dx/Data(n).dx);
+        Data(n).rateL2=log(Data(n-1).L2/Data(n).L2)/log(Data(n-1).dx/Data(n).dx);
+    end
 end
 end
-disp(struct2table(Data));
+if strcmp(fluxfun,'linear'), disp(struct2table(Data)); end
 
 %Plots results
 plot(x,u0,'-b',x, u,'or','MarkerSize',5); axis(plotRange);

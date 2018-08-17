@@ -19,22 +19,22 @@ clear; close all; clc;
 
 for n=1:4
 %% Parameters
-   nE = 040;    % base number of cells/elements;
+   nE = 050;    % base number of cells/elements;
    nx = nE*2^(n-1);	% actual number of cells
    ny = nE*2^(n-1);	% actual number of cells
-  CFL = 0.40;	% Courant Number;
- tEnd = 2.00;   % End time;
-limiter ='MM';  % MC, MM, VA;
+  CFL = 0.20;	% Courant Number;
+ tEnd = 0.10;   % End time;
+limiter ='VA';  % MC, MM, VA;
 RKmethod='RK2'; % RK2, RK3.
 plotFigs= false;
 
 fluxfun='linear'; % select flux function
 % Define our Flux function
 switch fluxfun
-    case 'linear'  % Scalar Advection CFL_max: 0.40
+    case 'linear'  % Scalar Advection CFL_max: 0.50
         c=1; flux = @(w) c*w; 
         dflux = @(w) c*ones(size(w));
-    case 'burgers' % Burgers, CFL_max: 0.40
+    case 'burgers' % Burgers, CFL_max: 0.50, tEnd: 3.5
         flux = @(w) w.^2/2; 
         dflux = @(w) w; 
 end
@@ -63,7 +63,7 @@ plotRange=[ax,bx,ay,by,0,1];
 
 % Initialize parpool
 poolobj = gcp('nocreate'); % If no pool, do not create new one.
-if isempty(poolobj); parpool('local',4); end
+if isempty(poolobj); parpool('local',2); end
 
 %% Solver Loop
 
@@ -110,25 +110,27 @@ while t < tEnd
 end
 
 %% Post Process
-% Compute error norms
-ue=u0; err=abs(ue(:)-u(:)); % error measurements only valid for the linear test!
-L1 = dx*dy*sum(abs(err)); fprintf('L_1 norm: %1.2e \n',L1);
-L2 = dx*dy*(sum(err.^2))^0.5; fprintf('L_2 norm: %1.2e \n',L2);
-Linf = norm(err,inf); fprintf('L_inf norm: %1.2e \n',Linf);
+if strcmp(fluxfun,'linear') % If linear test: compute error norms
+    if IC==2, ue=1.0*exp(-((x-c*tEnd).^2+(y-c*tEnd).^2)/0.1); end
+    err=abs(ue(:)-u(:)); 
+    L1 = dx*dy*sum(abs(err)); fprintf('L_1 norm: %1.2e \n',L1);
+    L2 = (dx*dy*sum(err.^2))^0.5; fprintf('L_2 norm: %1.2e \n',L2);
+    Linf = norm(err,inf); fprintf('L_inf norm: %1.2e \n',Linf);
 
-% Collect measurements for convergence
-Data(n).L1 = L1; %#ok<*SAGROW>
-Data(n).L2 = L2;
-Data(n).Linf=Linf;
-Data(n).dx = dx;
-Data(n).dy = dy;
-Data(n).dt = dt;
-if n>1 
-    Data(n).rateL1Space=log(Data(n-1).L1/Data(n).L1)/log(Data(n-1).dx/Data(n).dx);
-    Data(n).rateL2Space=log(Data(n-1).L2/Data(n).L2)/log(Data(n-1).dx/Data(n).dx);
+    % Collect measurements for convergence
+    Data(n).L1 = L1; %#ok<*SAGROW>
+    Data(n).L2 = L2;
+    Data(n).Linf=Linf;
+    Data(n).dx = dx;
+    Data(n).dy = dy;
+    Data(n).dt = dt;
+    if n>1 
+        Data(n).rateL1=log(Data(n-1).L1/Data(n).L1)/log(Data(n-1).dx/Data(n).dx);
+        Data(n).rateL2=log(Data(n-1).L2/Data(n).L2)/log(Data(n-1).dx/Data(n).dx);
+    end
 end
 end
-disp(struct2table(Data));
+if strcmp(fluxfun,'linear'), disp(struct2table(Data)); end
 
 %Plots results
 contour(x,y,u); axis square; xlabel('x'); ylabel('y'); 
