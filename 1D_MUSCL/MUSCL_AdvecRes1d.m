@@ -1,11 +1,14 @@
-function [dtu] = MUSCL_AdvecRes1d(u,flux,dflux,S,dx,limiter)
+function [res] = MUSCL_AdvecRes1d(u,dx,N,limiter)
 %MUSCL Monotonic Upstreat Centered Scheme for Conservation Laws
 %  Van Leer's MUSCL reconstruction scheme using piece wise
 %  linear reconstruction
 
-N=numel(u);
-du=zeros(1,N);
+% for burgers equation
+flux = @(w) w.^2/2; 
+dflux = @(w) w;
+
 % Compute and limit slopes
+du=zeros(1,N); up=zeros(1,N); um=zeros(1,N);
 for j = 2:N-1
     switch limiter
         case 'MC'
@@ -19,6 +22,10 @@ for j = 2:N-1
             a = (u(j+1) - u(j))/dx;
             b = (u(j) - u(j-1))/dx;
             du(j) = minmod([a,b]);
+        case 'VA'
+            a = (u(j+1) - u(j))/dx;
+            b = (u(j) - u(j-1))/dx;
+            du(j) = vanalbada(a,b,dx);
     end
     
     % Build p-w cell reconstructions
@@ -42,12 +49,12 @@ for j = 2:N-1
     Fm(j) = 1/2*((flux(up(j-1))+flux(um(j))) - a*(um(j)-up(j-1))); % Fj-1/2
     
     % Determine d/dt Uj
-    dtu(j) = (Fp(j)-Fm(j))/dx - S(j);
+    res(j) = -(Fp(j)-Fm(j))/dx;
     
 end
 
 % boundary conditions
-dtu(1) = dtu(N-1); dtu(N) = dtu(2);   % mirrored end points
+res(1) = res(N-1); res(N) = res(2);   % mirrored end points
 
 end
 

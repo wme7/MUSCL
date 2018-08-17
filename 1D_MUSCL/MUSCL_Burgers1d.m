@@ -20,9 +20,10 @@ clear; clc; close all;
 % Define problem constants
   A = 1.0;
 cfl = 0.70;
+limiter = 'MM';
 
 % Test cases
-test = 1;
+test = 3;
 switch test
     case 1
         Lx=1; nx=100; dx=Lx/nx; xc=dx/2:dx:Lx; range=[0,1,-0.25,1.25];
@@ -51,10 +52,10 @@ U=U0; time=0; iter=0; dt=dt0;
 while time < tEnd
     
     % Find Un+1 for 1st step
-    U_s = U + dt*MUSCL_AdvecRes1d(U,dx,nx);
+    U_s = U + dt*MUSCL_AdvecRes1d(U,dx,nx,limiter);
     
     % Find Un+2 for 2nd step
-    U_s2 = U_s + dt*MUSCL_AdvecRes1d(U_s,dx,nx);
+    U_s2 = U_s + dt*MUSCL_AdvecRes1d(U_s,dx,nx,limiter);
     
     % Corrector for 3rd step
     Un = 1/2*(U + U_s2);
