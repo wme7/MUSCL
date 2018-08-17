@@ -57,7 +57,7 @@ grid on; hold off
 
 % Build Structure Arrays
 cell(nE).u=0; 
-for e = 1:nE; % for every cell
+for e = 1:nE % for every cell
     cell(e).x = Xc(e);
     cell(e).y = Yc(e);
     cell(e).u = u0(e);
@@ -94,8 +94,9 @@ bCells = find(bCells);
 % Build Left and Right extrapolations for every cell
 for e = setdiff(1:nE,bCells)
     for v = 1:elem(e).nV
-       cell(e).ui(v) = cell(e).u + cell(e).ux*(cell(e).vx(v)-cell(e).x) ...
-                                + cell(e).uy*(cell(e).vy(v)-cell(e).y);
+       cell(e).ui(v) = cell(e).u + ...
+           cell(e).ux*(cell(e).vx(v)-cell(e).x)+ ...
+           cell(e).uy*(cell(e).vy(v)-cell(e).y);
     end
 end
 
