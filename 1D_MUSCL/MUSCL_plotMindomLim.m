@@ -37,7 +37,7 @@ plot(xc,u0,'-k','LineWidth',1.5); hold on;
 
 % Build Structure Arrays
 cell(nx).BC=1; cell(1).BC=1;
-for j = 1:nx; % for every cell
+for j = 1:nx % for every cell
     cell(j).x = xc(j);
     cell(j).u = u0(j);
 end
@@ -65,10 +65,11 @@ for j = 2:nx-1 % internal cells
     cell(j).uR = cell(j).u - cell(j).du*dx/2; % u_{j-1/2}^{+} from j 
     cell(j).uL = cell(j).u + cell(j).du*dx/2; % u_{j+1/2}^{-} from j
 end
-struct2table(cell)
+disp(struct2table(cell));
 
 % Plot Piezewise Linear Approximation with limiter
 xi= [-1/2;0;1/2];
 x = repmat([cell(2:nx-1).x],3,1) + xi*[cell.dx];	
 u = [cell(2:nx-1).uR;cell(2:nx-1).u;cell(2:nx-1).uL];
 plot(x,u,'-o','LineWidth',1.5); grid on; axis(range); hold off
+title('Testing the minmod function in 1d');

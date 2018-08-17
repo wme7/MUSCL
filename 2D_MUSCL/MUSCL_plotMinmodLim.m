@@ -39,8 +39,8 @@ subplot(121); surf(Xc,Yc,u0); view(-20,20);
 
 % Build Structure Arrays
 cell(nx,ny).BC=1; cell(1,1).BC=1;
-for i = 1:ny; % for every cell
-    for j = 1:nx; % for every cell
+for i = 1:ny % for every cell
+    for j = 1:nx % for every cell
         cell(i,j).x = Xc(i,j);
         cell(i,j).y = Yc(i,j);
         cell(i,j).u = u0(i,j);
@@ -52,12 +52,12 @@ for i = 2:ny-1
         % Left and Right slopes 
         cell(i,j).duw = (cell(i, j ).u - cell(i,j-1).u)/dx; % du between j and j-1
         cell(i,j).due = (cell(i,j+1).u - cell(i, j ).u)/dx; % du between j+1 and j
-        %cell(i,j).dux = minmod([cell(i,j).duw,cell(i,j).due]);
-        cell(i,j).dux = mean([cell(i,j).duw,cell(i,j).due]);
+        cell(i,j).dux = minmod([cell(i,j).duw,cell(i,j).due]);
+        %cell(i,j).dux = mean([cell(i,j).duw,cell(i,j).due]);
         cell(i,j).dus = (cell( i ,j).u - cell(i-1,j).u)/dy; % du between i and i-1
         cell(i,j).dun = (cell(i+1,j).u - cell( i ,j).u)/dy; % du between i+1 and i
-        %cell(i,j).duy = minmod([cell(i,j).dus,cell(i,j).dun]);
-        cell(i,j).duy = mean([cell(i,j).dus,cell(i,j).dun]);
+        cell(i,j).duy = minmod([cell(i,j).dus,cell(i,j).dun]);
+        %cell(i,j).duy = mean([cell(i,j).dus,cell(i,j).dun]);
         cell(i,j).dy = dy; cell(i,j).dx = dx;
     end
 end
@@ -92,6 +92,7 @@ end
 % Plot Piezewise Linear Approximation with limiter
 xi= [-1/2;1/2]; eta=[-1/2;1/2]; [XI,ETA] = meshgrid(xi,eta);
 subplot(122); hold on; view(-20,20); grid on;
+title('Minmod function with 2d Quads');
 for i = 2:ny-1
     for j = 2:nx-1 % internal cells
         surf(XI*dx+cell(i,j).x,ETA*dy+cell(i,j).y,...
