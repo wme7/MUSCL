@@ -24,7 +24,7 @@ for n=1:4
   CFL = 0.20;	 % Courant Number;
  tEnd = 2.00;    % End time;
 limiter ='MC';   % MC, MM, VA;
-RKmethod='RK3';  % RK2, RK3.
+RKmethod='RK2';  % RK2, RK3.
 plotFigs= false; % plot figures
 
 fluxfun='linear'; % select flux function
@@ -44,10 +44,8 @@ end
 sourcefun='dont'; % add source term
 % Source term
 switch sourcefun
-    case 'add'
-        S = @(w) 0.1*w.^2;
-    case 'dont'
-        S = @(w) zeros(size(w));
+    case 'add', S = @(w) 0.1*w.^2;
+    case 'dont',S = @(w) zeros(size(w));
 end
 
 % Build discrete domain
@@ -56,12 +54,9 @@ a=-1; b=1; dx=(b-a)/nx; x=a+dx/2:dx:b;
 % Build IC
 ICcase=2;  % {1}Testing, {2}Costum ICs
 switch ICcase
-    case 1 % Testing IC
-        u0=TestingIC(x);  % Jiang and Shu IC
-    case 2 % Guassian IC
-        u0=Scalar_IC(x,7); % cases 1-9 <- check them out!
-    otherwise
-        error('IC file not listed');
+    case 1, u0=TestingIC(x);  % Shu's scalar test IC
+    case 2, u0=Scalar_IC(x,1); % classical scalar cases, see Scalar_IC.m
+    otherwise, error('IC file not listed');
 end
 
 % Plot range

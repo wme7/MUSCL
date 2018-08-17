@@ -238,7 +238,7 @@ for e = 1:nE
         end % elements around vR
         in = k+2;
         if in > elem(e).nV; in=in-elem(e).nV; end 
-        if found; 
+        if found
             elem(e).nghbr(in) = j;
             elem(j).nghbr(im) = e;
         else
@@ -428,7 +428,7 @@ end
 %       o            o: neighbors (edge-connected nghbrs)
 %
 % Initialize count neighbour list
-for i = 1:nN; 
+for i = 1:nN
     node(i).nnghbrs=0; 
 end
 
@@ -501,7 +501,7 @@ end
 
 % Compute the outward normals
 for i = 1:nbound
-    for j = 1:bound(i).nbnodes-1;
+    for j = 1:bound(i).nbnodes-1
         x1 = node(bound(i).bnode( j )).x;
         y1 = node(bound(i).bnode( j )).y;
         x2 = node(bound(i).bnode(j+1)).x;

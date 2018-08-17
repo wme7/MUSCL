@@ -31,24 +31,19 @@ plotFigs= false;
 fluxfun='linear'; % select flux function
 % Define our Flux function
 switch fluxfun
-    case 'linear'  % Scalar Advection CFL_max: 0.90
+    case 'linear'  % Scalar Advection CFL_max: 0.40
         c=1; flux = @(w) c*w; 
         dflux = @(w) c*ones(size(w));
-    case 'burgers' % Burgers, CFL_max: 0.90
+    case 'burgers' % Burgers, CFL_max: 0.40
         flux = @(w) w.^2/2; 
         dflux = @(w) w; 
-    case 'buckley' % Buckley-Leverett, CFL_max: 0.40 & tEnd: 0.40
-        flux = @(w) 4*w.^2./(4*w.^2+(1-w).^2);
-        dflux = @(w) 8*w.*(1-w)./(5*w.^2-2*w+1).^2;
 end
 
 sourcefun='dont'; % add source term
 % Source term
 switch sourcefun
-    case 'add'
-        S = @(w) 0.1*w.^2;
-    case 'dont'
-        S = @(w) zeros(size(w));
+    case 'add', S = @(w) 0.1*w.^2;
+    case 'dont',S = @(w) zeros(size(w));
 end
 
 % Build discrete domain
@@ -57,11 +52,18 @@ ay=-1; by=1; dy=(by-ay)/ny; yc=ay+dy/2:dy:by;
 [x,y]=meshgrid(xc,yc);
 
 % Build IC
-%u0=(x<0.5 & x>-0.5 & y<0.5 & y>-0.5); % Square block
-u0=1.0*exp(-(x.^2+y.^2)/0.1); % Smooth Guassian
+IC = 2;
+switch IC
+    case 1, u0=(x<0.5 & x>-0.5 & y<0.5 & y>-0.5); % Square block
+    case 2, u0=1.0*exp(-(x.^2+y.^2)/0.1); % Smooth Guassian
+end
 
 % Plot range
 plotRange=[ax,bx,ay,by,0,1];
+
+% Initialize parpool
+poolobj = gcp('nocreate'); % If no pool, do not create new one.
+if isempty(poolobj); parpool('local',4); end
 
 %% Solver Loop
 
@@ -75,23 +77,23 @@ while t < tEnd
     switch RKmethod
         case 'RK2' % SSP-RK2
             % 1st stage
-            L=MUSCL_AdvecRes2d_periodic(u,flux,dflux,S,dx,dy,limiter);	us=u-dt*L;
+            L=MUSCL_AdvecRes2d_periodic(u,flux,dflux,S,dx,dy,nx,ny,limiter);	us=u-dt*L;
             
             % 2nd stage
-            L=MUSCL_AdvecRes2d_periodic(us,flux,dflux,S,dx,dy,limiter);	u=(u+us-dt*L)/2;
+            L=MUSCL_AdvecRes2d_periodic(us,flux,dflux,S,dx,dy,nx,ny,limiter);	u=(u+us-dt*L)/2;
             
         case 'RK3' % SSP-RK33
             % Initial step
             uo = u;
 
             % 1st stage
-            L=MUSCL_AdvecRes2d_periodic(u,flux,dflux,S,dx,dy,limiter);	u=uo-dt*L;
+            L=MUSCL_AdvecRes2d_periodic(u,flux,dflux,S,dx,dy,nx,ny,limiter);	u=uo-dt*L;
 
             % 2nd Stage
-            L=MUSCL_AdvecRes2d_periodic(u,flux,dflux,S,dx,dy,limiter);	u=0.75*uo+0.25*(u-dt*L);
+            L=MUSCL_AdvecRes2d_periodic(u,flux,dflux,S,dx,dy,nx,ny,limiter);	u=0.75*uo+0.25*(u-dt*L);
 
             % 3rd stage
-            L=MUSCL_AdvecRes2d_periodic(u,flux,dflux,S,dx,dy,limiter);	u=(uo+2*(u-dt*L))/3;
+            L=MUSCL_AdvecRes2d_periodic(u,flux,dflux,S,dx,dy,nx,ny,limiter);	u=(uo+2*(u-dt*L))/3;
             
         otherwise
             error('Time integration method not set');
@@ -129,5 +131,5 @@ end
 disp(struct2table(Data));
 
 %Plots results
-contour(x,y,u); axis(plotRange); xlabel('x'); ylabel('y'); 
-title([RKmethod,'-MUSCL Nonlinear Advection: ',fluxfun,' test']);
+contour(x,y,u); axis square; xlabel('x'); ylabel('y'); 
+title([RKmethod,'-MUSCL Nonlinear Advection: ',fluxfun,' test 2d']);

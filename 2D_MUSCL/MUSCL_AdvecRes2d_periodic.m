@@ -1,28 +1,26 @@
-function [res] = MUSCL_AdvecRes2d_periodic(qi,flux,dflux,S,dx,dy,limiter)
+function [res] = MUSCL_AdvecRes2d_periodic(qi,flux,dflux,S,dx,dy,N,M,limiter)
 %   MUSCL Monotonic Upstreat Centered Scheme for Conservation Laws
 %   Van Leer's MUSCL reconstruction scheme using piece wise linear
 %   reconstruction
 %
 % Written by Manuel Diaz, NTU, 04.29.2015.
 
-N=size(qi,1); M=size(qi,2);
+% Normal unitary face vectors: (nx,ny)
+%normals = {[0,1], [1,0], [0,-1], [-1,0]}; % i.e.: [N, E, S, W]
 
 % Initial Arrays      
 % qi : q_{ i,j }^{n},
-qim1 = circshift(qi,[0,+1]); % : q_{j,i-1}^{n},
+qim1 = circshift(qi,[0, 1]); % : q_{j,i-1}^{n},
 qip1 = circshift(qi,[0,-1]); % : q_{j,i+1}^{n}.
-qjm1 = circshift(qi,[+1,0]); % : q_{j-1,i}^{n}.
+qjm1 = circshift(qi,[ 1,0]); % : q_{j-1,i}^{n}.
 qjp1 = circshift(qi,[-1,0]); % : q_{j+1,i}^{n}.
 
 dqE = qip1-qi; dqW = qi-qim1; dqC = (qip1-qim1)/2; dqdx = zeros(size(qi));
-dqN = qjp1-qi; dqS = qi-qjm1; dqM = (qjp1-qjm1)/2; dqdy = zeros(size(qi));
-
-% Normal unitary face vectors: (nx,ny)
-%normals = {[0,1], [1,0], [0,-1], [-1,0]}; % i.e.: [N, E, S, W] 
+dqN = qjp1-qi; dqS = qi-qjm1; dqM = (qjp1-qjm1)/2; dqdy = zeros(size(qi)); 
 
 % Compute and limit slopes at cells (i,j)
-for i = 1:M       % only internal cells
-    for j = 1:N   % only internal cells
+parfor i = 1:M % only internal cells
+    for j = 1:N % only internal cells
         switch limiter
             case 'MC' % MC limiter: Find dq_j = minmod{fwd diff, bwd diff, cntrl diff}
                 dqdx(j,i) = minmod([dqW(j,i),dqE(j,i),dqC(j,i)]);
@@ -40,16 +38,16 @@ end
 %% Compute MUSCL reconstructions
 
 % Left and Right extrapolated q-values at the boundary i+1/2
-qiph = qi+dqdx/2;	% q_{j,i+1/2}^{-} from cell ij
-qimh = qi-dqdx/2;	% q_{j,i-1/2}^{+} from cell ij
+qiph = qi+dqdx/2;	% q_{j,i+1/2}^{-} from cell_ij
+qimh = qi-dqdx/2;	% q_{j,i-1/2}^{+} from cell_ij
 
 qL=qiph; qR=circshift(qimh,[0,-1]);
 
 % Compute Lax-Friedrichs numerical flux and update solution
 LFx = 0.5*(flux(qL)+flux(qR)-abs(dflux((qi+qip1)/2)).*(qR-qL)); % Lax friedrichs flux
 
-qiph = qi+dqdy/2;	% q_{j+1/2,i}^{-} from cell ij
-qimh = qi-dqdy/2;	% q_{j-1/2,i}^{+} from cell ij
+qiph = qi+dqdy/2;	% q_{j+1/2,i}^{-} from cell_ij
+qimh = qi-dqdy/2;	% q_{j-1/2,i}^{+} from cell_ij
 
 qL=qiph; qR=circshift(qimh,[-1,0]);
 
