@@ -187,15 +187,15 @@ switch Etype
                 if ((i<midxE) && (j<midyE)) || ((i>midxE) && (j>midyE))
                     rn = rand;
                     if rn < 0.5
-                        EtoV{ e } = [k, ny+k,  ny+k+1];
-                        EtoV{e+1} = [k, ny+k+1,   k+1];
+                        EtoV{ e } = [k, ny+k,  ny+k+1]';
+                        EtoV{e+1} = [k, ny+k+1,   k+1]';
                     else
-                        EtoV{ e } = [k,    ny+k,   k+1];
-                        EtoV{e+1} = [ny+k, ny+k+1, k+1];
+                        EtoV{ e } = [k,    ny+k,   k+1]';
+                        EtoV{e+1} = [ny+k, ny+k+1, k+1]';
                     end
                     e = e+2; % element counter    
                 else
-                   EtoV{ e } = [k, ny+k,  ny+k+1, k+1];
+                   EtoV{ e } = [k, ny+k,  ny+k+1, k+1]';
                     e = e+1; % element counter 
                 end
             end
@@ -249,7 +249,7 @@ j=ny; for i=1:nx; inode=j+(i-1)*ny; BC.top(i)=inode;    end	% top
 % Plot Element as patches
 figure(1); hold on;
 for e = 1:nE
-    patch(vx(EtoV{e})',vy(EtoV{e})',zeros(size(EtoV{e}')),'w');
+    patch(vx(EtoV{e}),vy(EtoV{e}),zeros(size(EtoV{e})),'w');
 end
 %cell2table(EtoV) % cannot display all info :(
 

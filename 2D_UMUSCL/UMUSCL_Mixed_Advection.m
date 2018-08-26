@@ -19,8 +19,8 @@ clear; clc; close all;
   tEnd = 0.10; % final time;
 limiter= 'VA'; % MM, VA, none;
 fluxMth= 'LF'; % Lax-Friedrichs;
-   nEx = 10;   % number of elements in x direction;
-   nEy = 10;   % number of elements in y direction;
+    nx = 11;   % number nodes in x direction;
+    ny = 11;   % number nodes in y direction;
 
 % Define a flux function
 fluxfun = 'linear'; % select a flux function
@@ -34,7 +34,7 @@ switch fluxfun
 end
    
 % Load/build an unstructured mesh
-[vx,vy,EtoV,nE,nN,BC] = SquareMesh(0,1,0,1,'MIXED',nEx,nEy);
+[vx,vy,EtoV,nE,nN,BC] = SquareMesh(0,1,0,1,'MIXED',nx,ny);
 
 % Build cells in the given unstructured mesh
 [node,elem,edge,~,bound] = BuildUnstructuredMesh2d(vx,vy,EtoV,nE,nN,BC);
@@ -42,25 +42,26 @@ end
 % Check integrity of the mesh
 %CheckUnstructuredMesh2d(node,elem,edge);
 
-% Build Cell Center's grid
-x=zeros(nE,1); y=zeros(nE,1);
-for i = 1:nN
-    x(i)=node(i).x; y(i)=node(i).y;
-end
-
-% Build Cell Average's IC 
+% Define initial condition (IC)
 IC=02;
 switch IC
     case 01, f0 = @(x,y) zeros(size(x)) + 1*(x>=0.3 & x<0.7).*(y>=0.3 & y<0.7); % square jump
     case 02, f0 = @(x,y) exp(-30*((x-1/2).^2+(y-1/2).^2)); % gaussian profile
 end
-u0=f0(x,y);
+
+% Set IC in mesh
+vx=[node.x]'; 
+vy=[node.y]';
+u0=f0(vx,vy);
 
 % Nodes associated volume
 vol = [node.vol]';
 
+% Nodes Sum of the max wave speed multiplied by the face length
+wsn = [node.wsn]';
+
 % compute initial time step, dt0:
-dt0 = ComputeTimeStep(node);
+dt0 = ComputeTimeStep(vol,wsn);
 
 %% Solver Loop
 
@@ -72,11 +73,11 @@ while t < tEnd
     if t+dt>tEnd, dt=tEnd-t; end; t=t+dt;
     
     % Runge-kutta stage 1
-    L=UMUSCLrhs(u,F,dF,G,dG,node,edge,bound,limiter,fluxMth);
+    L=UMUSCL_AdvRHS(u,F,dF,G,dG,node,edge,bound,limiter,fluxMth);
     us=u-dt*CFL/vol*L;
     
     % Runge-kutta stage 2
-    L=UMUSCLrhs(us,F,dF,G,dG,node,edge,bound,limiter,fluxMth);
+    L=UMUSCL_AdvRHS(us,F,dF,G,dG,node,edge,bound,limiter,fluxMth);
     u=0.5*(u+(us-dt*CFL/vol*L));
     
     % iteration counter
@@ -89,15 +90,16 @@ end
 %% Postprocess
 
 % Visualize initial condition
-figure(2); hold on;
-for i = 1:nE
-    patch(vx(EtoV{i})',vy(EtoV{i})',f0(vx(EtoV{i})',vy(EtoV{i})'),u0(i));
+figure(1);
+subplot(111); hold on;
+for e = 1:nE
+    patch(vx(EtoV{e}),vy(EtoV{e}),u0(EtoV{e}),mean(u0(EtoV{e}))); 
 end
-grid on; hold off
+grid on; hold off; title(['Solution profile t=',num2str(0)]);
 
-% Visualize solution profile
-figure(3); hold on;
-for i = 1:nE
-    patch(vx(EtoV{i})',vy(EtoV{i})',f0(vx(EtoV{i})',vy(EtoV{i})'),u(i));
+% Visualize solution profile at t=tEnd
+subplot(112); hold on;
+for e = 1:nE
+    patch(vx(EtoV{e}),vy(EtoV{e}),u(EtoV{e}),mean(u(EtoV{e})));
 end
-grid on; hold off
+grid on; hold off; title(['Solution profile t=',num2str(t)]);

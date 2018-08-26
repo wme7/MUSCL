@@ -1,4 +1,4 @@
-function [res]=UMUSCL_AdvRHS(u,F,dF,G,dG,node,edge,bound,limiter,fluxMth)
+function [res,wsn]=UMUSCL_AdvRHS(u,F,dF,G,dG,node,edge,bound,limiter,fluxMth)
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % computes the residual for a node-centered finite-volume method
 % -------------------------------------------------------------------------
@@ -51,8 +51,8 @@ end
 %  NOTE: The gradient is multiplied by the distance.
 %        So, it is equivalent to the solution difference.
 
-duL = (node(node1).gradu(:,ix)*e12(ix) + node(node1).gradu(:,iy)*e12(iy))*0.5*mag_e12;
-duR = (node(node2).gradu(:,ix)*e12(ix) + node(node2).gradu(:,iy)*e12(iy))*0.5*mag_e12;
+duL = (node(node1).gradu(:,1)*e12(1) + node(node1).gradu(:,2)*e12(2))*0.5*mag_e12;
+duR = (node(node2).gradu(:,1)*e12(1) + node(node2).gradu(:,2)*e12(2))*0.5*mag_e12;
 
 %  It is now limiter time
 %--------------------------------------------------------------------------
@@ -93,8 +93,8 @@ switch limiter
 end
 
 %  Compute the numerical flux for given uL and uR.
-switch fluxFun
-    case 'LF', [num_flux,wsn] = LFflux(wL,wR,n12);
+switch fluxMth
+    case 'LF', [num_flux,wsn] = LFflux(uL,uR,n12);
     otherwise 
         error('flux method not set');
 end
