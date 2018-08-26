@@ -94,7 +94,8 @@ end
 
 %  Compute the numerical flux for given uL and uR.
 switch fluxMth
-    case 'LF', [num_flux,wsn] = LFflux(uL,uR,n12);
+    case 'LF', [num_flux,wsn] = LFflux(uL,uR,n12); % Lax-Friedrichs
+    case 'UP', [num_flux,wsn] = UPflux(uL,uR,n12); % Upwind flux
     otherwise 
         error('flux method not set');
 end
@@ -192,6 +193,10 @@ end
      
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Limiter and Numerical Fluxes  %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function mm = minmod(v)
     % Using Harten's generalized definition
     % minmod: zero if opposite sign, otherwise the one of smaller magnitude.
@@ -209,6 +214,17 @@ function va = vanAlbada(da,db,h)
 end
 
 function [flux,swn] = LFflux(uL,uR,n12)
+    % Find alpha = max|f'(u)|
+    swn = max(abs(dflux(u)));
+
+    % Compute Fj+1/2 and Fj-1/2
+    for j = 2:N-1
+        % Apply L-W Flux Function
+        flux = 1/2*((flux(uR)+flux(uL)) - swn*(um(j+1)-up(j))); % Fj+1/2
+    end
+end
+
+function [flux,swn] = UPflux(uL,uR,n12)
     % Find alpha = max|f'(u)|
     swn = max(abs(dflux(u)));
 

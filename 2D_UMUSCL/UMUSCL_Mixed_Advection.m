@@ -18,7 +18,7 @@ clear; clc; close all;
   CFL  = 0.25; % CFL condition;
   tEnd = 0.10; % final time;
 limiter= 'VA'; % MM, VA, none;
-fluxMth= 'LF'; % Lax-Friedrichs;
+fluxMth= 'LF'; % LF:Lax-Friedrichs, UP:Upwind; 
     nx = 11;   % number nodes in x direction;
     ny = 11;   % number nodes in y direction;
 
@@ -40,7 +40,7 @@ end
 [node,elem,edge,~,bound] = BuildUnstructuredMesh2d(vx,vy,EtoV,nE,nN,BC);
 
 % Check integrity of the mesh
-%CheckUnstructuredMesh2d(node,elem,edge);
+CheckUnstructuredMesh2d(node,elem,edge);
 
 % Define initial condition (IC)
 IC=02;
@@ -61,7 +61,7 @@ vol = [node.vol]';
 wsn = [node.wsn]';
 
 % compute initial time step, dt0:
-dt0 = ComputeTimeStep(vol,wsn);
+dt0 = 0.01;%ComputeTimeStep(vol,wsn);
 
 %% Solver Loop
 
@@ -73,18 +73,18 @@ while t < tEnd
     if t+dt>tEnd, dt=tEnd-t; end; t=t+dt;
     
     % Runge-kutta stage 1
-    L=UMUSCL_AdvRHS(u,F,dF,G,dG,node,edge,bound,limiter,fluxMth);
+    [L,~]=UMUSCL_AdvRHS(u,F,dF,G,dG,node,edge,bound,limiter,fluxMth);
     us=u-dt*CFL/vol*L;
     
     % Runge-kutta stage 2
-    L=UMUSCL_AdvRHS(us,F,dF,G,dG,node,edge,bound,limiter,fluxMth);
+    [L,wsn]=UMUSCL_AdvRHS(us,F,dF,G,dG,node,edge,bound,limiter,fluxMth);
     u=0.5*(u+(us-dt*CFL/vol*L));
     
     % iteration counter
     it=it+1;
     
     % compute next step time step
-    dt=ComputeTimeStep(node);
+    dt=0.01;%ComputeTimeStep(vol,wsn);
 end
 
 %% Postprocess
