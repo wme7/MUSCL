@@ -1,11 +1,12 @@
-function [node,elem,edge,bound] = BuildUnstructuredMesh2d(vx,vy,EtoV,nE,nN,BC)
-% Build Unstructured Mesh 2-D {v2} (modified to work with mixed grids!)
+function [node,elem,edge,face,bound] = BuildUnstructuredMesh2d(vx,vy,EtoV,nE,nN,BC)
+% Build Unstructured Mesh 2-D {v2} (modified to work with mixed grids%)
 %
 %   The following data, needed for NCFV method, will be constructed:
 %       1. elem(:)
 %       2. node(:)
 %       3. edge(:)
-%       4. bound(:)
+%       4. face(:)
+%       5. bound(:)
 %
 %   NOTE: bc_name is the name of the boundary condition.
 %         Only four BCs are available in this version:
@@ -69,7 +70,7 @@ for e = 1:nE
             ax = vx(EtoV{e}(1)); ay = vy(EtoV{e}(1));
             bx = vx(EtoV{e}(2)); by = vy(EtoV{e}(2));
             cx = vx(EtoV{e}(3)); cy = vy(EtoV{e}(3));
-            Area = (ax-cx).*(by-cy)-(bx-cx).*(ay-cy);
+            Area = 0.5*((ax-cx).*(by-cy)-(bx-cx).*(ay-cy));
             elem(e).A = Area;
             elem(e).x = (ax+bx+cx)/3;
             elem(e).y = (ay+by+cy)/3;
@@ -84,7 +85,7 @@ for e = 1:nE
             bx = vx(EtoV{e}(2)); by = vy(EtoV{e}(2));
             cx = vx(EtoV{e}(3)); cy = vy(EtoV{e}(3));
             dx = vx(EtoV{e}(4)); dy = vy(EtoV{e}(4));
-            Area = 0.5*(ax-dx)*(cy-dy)-(bx-dx)*(by-dy)-(cx-dx)*(ay-dy);
+            Area = 0.5*((ax-dx)*(cy-dy)-(bx-dx)*(by-dy)-(cx-dx)*(ay-dy));
             elem(e).A = Area;
             elem(e).x = (ax+bx+cx+dx)/4;
             elem(e).y = (ay+by+cy+dy)/4;
@@ -143,8 +144,9 @@ for e = 1:nE
             v2=elem(e).v(2); node(v2).nelms=node(v2).nelms+1; node(v2).elms(node(v2).nelms)=e;
             v3=elem(e).v(3); node(v3).nelms=node(v3).nelms+1; node(v3).elms(node(v3).nelms)=e;
             % Dual volume around every node
-            x1=node(v1).x; y1=node(v1).y; x2=node(v2).x; y2=node(v2).y;
-            x3=node(v3).x; y3=node(v3).y; xc=elem( e).x; yc=elem( e).y;
+            %x1=node(v1).x; y1=node(v1).y; x2=node(v2).x; y2=node(v2).y;
+            %x3=node(v3).x; y3=node(v3).y; xc=elem( e).x; yc=elem( e).y;
+            % Dual volume is exactly 1/3 of the volume of the triangle%
             % v1
             node(v1).vol = node(v1).vol + elem(e).vol/3;
             % v2
@@ -165,19 +167,19 @@ for e = 1:nE
             % v1
             ax = x1; bx = x12; cx = xc; dx = x41;
             ay = y1; by = y12; cy = yc; dy = y41;
-            node(v1).vol = node(v1).vol + 0.5*(ax-dx)*(cy-dy)-(bx-dx)*(by-dy)-(cx-dx)*(ay-dy);
+            node(v1).vol = node(v1).vol + 0.5*((ax-dx)*(cy-dy)-(bx-dx)*(by-dy)-(cx-dx)*(ay-dy));
             % v2
             ax = x12; bx = x2; cx = x23; dx = xc;
             ay = y12; by = y2; cy = y23; dy = yc;
-            node(v2).vol = node(v2).vol + 0.5*(ax-dx)*(cy-dy)-(bx-dx)*(by-dy)-(cx-dx)*(ay-dy);
+            node(v2).vol = node(v2).vol + 0.5*((ax-dx)*(cy-dy)-(bx-dx)*(by-dy)-(cx-dx)*(ay-dy));
             % v3
             ax = xc; bx = x23; cx = x3; dx = x34;
             ay = yc; by = y23; cy = y3; dy = y34;
-            node(v3).vol = node(v3).vol + 0.5*(ax-dx)*(cy-dy)-(bx-dx)*(by-dy)-(cx-dx)*(ay-dy);
+            node(v3).vol = node(v3).vol + 0.5*((ax-dx)*(cy-dy)-(bx-dx)*(by-dy)-(cx-dx)*(ay-dy));
             % v4
             ax = x41; bx = xc; cx = x34; dx = x4;
             ay = y41; by = yc; cy = y34; dy = y4;
-            node(v4).vol = node(v4).vol + 0.5*(ax-dx)*(cy-dy)-(bx-dx)*(by-dy)-(cx-dx)*(ay-dy);
+            node(v4).vol = node(v4).vol + 0.5*((ax-dx)*(cy-dy)-(bx-dx)*(by-dy)-(cx-dx)*(ay-dy));
     end
 end
 
@@ -220,14 +222,14 @@ end
 for e = 1:nE
     for k = 1:elem(e).nV    % also number of total edges
         % evaluate edges in counter clockwise direction
-        vR = elem(e).v(k); if k < elem(e).nV; vL=elem(e).v(k+1); else vL=elem(e).v(1); end
+        vR = elem(e).v(k); if k < elem(e).nV; vL=elem(e).v(k+1); else, vL=elem(e).v(1); end
         %disp([k,vR,vL]) % Perform edge matching of: vR o---o vL
         found=false;     % Start with a negative condition
         for eAround = 1:node(vR).nelms % for all elements around vR
             j = node(vR).elms(eAround);
             for i = 1:elem(j).nV    % for every edge of j-element
                 % evaluate edges in clockwise direction
-                vr = elem(j).v(i); if i > 1; vl=elem(j).v(i-1); else vl=elem(j).v(elem(j).nV); end
+                vr = elem(j).v(i); if i > 1; vl=elem(j).v(i-1); else, vl=elem(j).v(elem(j).nV); end
                 %disp([j,vr,vl]) % Perform edge matching of: vR o---o vL
                 if (vR==vr && vL==vl); found=true; im=i+1;
                     if im > elem(j).nV; im=im-elem(j).nV; end
@@ -255,8 +257,8 @@ end
 % Edge points from node n1 to node n2.
 %
 %      n2
-%       o------------o
-%     .  \         .
+%       o-------------o
+%     .  \          .
 %    .    \   e2  .
 %   .  e1  \    .
 %  .        \ .         Directed area is positive: n1 -> n2
@@ -278,37 +280,14 @@ for e = 1:nE
     if elem(e).nghbr(i)>e || elem(e).nghbr(i)==0; nedges=nedges+1; end
     end
 end
-edge(nedges).nEdges= nedges; %disp(nedges)
-
-% Buggy snipet CAREFUL%%
-% nedges = 0;
-% for e = 1:nE
-%     nEdge = numel(EtoV(e,:));
-%     switch nEdge
-%         case 3
-%             face = [elem(e).v(3),elem(e).v(1);
-%                     elem(e).v(2),elem(e).v(3);
-%                     elem(e).v(1),elem(e).v(2)];
-%         case 4
-%             face = [elem(e).v(4),elem(e).v(1);
-%                     elem(e).v(3),elem(e).v(4);
-%                     elem(e).v(2),elem(e).v(3);
-%                     elem(e).v(1),elem(e).v(2)];
-%     end
-%     disp(face);
-%     for i = 1:nEdge
-%         if elem(e).nghbr(i) > e || elem(e).nghbr(i) == 0
-%             nedges = nedges + 1;
-%             edge(nedges).nodes = face(i,:);
-%             disp([e,elem(e).nghbr(i)]);
-%             edge(nedges).elems = [e,elem(e).nghbr(i)];
-%         end
-%     end
-% end
+%disp(nedges)
 
 % Build Edges nodes and elements list 
-% edge(nedges).nodes = [0,0]; % [n1,n2] End nodes of each edge (edge points n1 -> n2)
-% edge(nedges).elems = [0,0]; % [e1,e2] Left and right elements of each edge
+edge(nedges).n1=0; % End nodes of each edge (edge points n1 -> n2)
+edge(nedges).n2=0;
+edge(nedges).e1=0; % Left and right elements of each edge
+edge(nedges).e2=0;
+
 nedges = 0;
 for i = 1:nE
     % vertices
@@ -320,40 +299,54 @@ for i = 1:nE
         case 3 % Triangle element
             if elem(i).nghbr(3) > i || elem(i).nghbr(3)==0
                 nedges = nedges + 1;
-                edge(nedges).nodes = [v1,v2];
-                edge(nedges).elems = [i,elem(i).nghbr(3)];
+                edge(nedges).n1 = v1;
+                edge(nedges).n2 = v2;
+                edge(nedges).e1 = i;
+                edge(nedges).e2 = elem(i).nghbr(3);
             end
             if  elem(i).nghbr(1) > i || elem(i).nghbr(1)==0
                 nedges = nedges + 1;
-                edge(nedges).nodes = [v2,v3];
-                edge(nedges).elems = [i,elem(i).nghbr(1)];
+                edge(nedges).n1 = v2;
+                edge(nedges).n2 = v3;
+                edge(nedges).e1 = i;
+                edge(nedges).e2 = elem(i).nghbr(1);
             end
             if  elem(i).nghbr(2) > i || elem(i).nghbr(2)==0
                 nedges = nedges + 1;
-                edge(nedges).nodes = [v3,v1];
-                edge(nedges).elems = [i,elem(i).nghbr(2)];
+                edge(nedges).n1 = v3;
+                edge(nedges).n2 = v1;
+                edge(nedges).e1 = i;
+                edge(nedges).e2 = elem(i).nghbr(2);
             end
         case 4 % quadrilateral element
             v4 = elem(i).v(4);
             if  elem(i).nghbr(3) > i || elem(i).nghbr(3) ==0
                 nedges = nedges + 1;
-                edge(nedges).nodes = [v1,v2];
-                edge(nedges).elems = [i,elem(i).nghbr(3)];
+                edge(nedges).n1 = v1;
+                edge(nedges).n2 = v2;
+                edge(nedges).e1 = i;
+                edge(nedges).e2 = elem(i).nghbr(3);
             end
             if  elem(i).nghbr(4) > i || elem(i).nghbr(4) ==0
                 nedges = nedges + 1;
-                edge(nedges).nodes = [v2,v3];
-                edge(nedges).elems = [i,elem(i).nghbr(4)];
+                edge(nedges).n1 = v2;
+                edge(nedges).n2 = v3;
+                edge(nedges).e1 = i;
+                edge(nedges).e2 = elem(i).nghbr(4);
             end
             if  elem(i).nghbr(1) > i || elem(i).nghbr(1) ==0
                 nedges = nedges + 1;
-                edge(nedges).nodes = [v3,v4];
-                edge(nedges).elems = [i,elem(i).nghbr(1)];
+                edge(nedges).n1 = v3;
+                edge(nedges).n2 = v4;
+                edge(nedges).e1 = i;
+                edge(nedges).e2 = elem(i).nghbr(1);
             end
             if  elem(i).nghbr(2) > i || elem(i).nghbr(2) ==0
                 nedges = nedges + 1;
-                edge(nedges).nodes = [v4,v1];
-                edge(nedges).elems = [i,elem(i).nghbr(2)];
+                edge(nedges).n1 = v4;
+                edge(nedges).n2 = v1;
+                edge(nedges).e1 = i;
+                edge(nedges).e2 = elem(i).nghbr(2);
             end
     end
 end
@@ -378,14 +371,14 @@ end
 %
 for d = 1:nedges
     % base information
-    n1 = edge(d).nodes(1);
-    n2 = edge(d).nodes(2);
-    e1 = edge(d).elems(1);
-    e2 = edge(d).elems(2);
+    n1 = edge(d).n1;
+    n2 = edge(d).n2;
+    e1 = edge(d).e1;
+    e2 = edge(d).e2;
     xm = 0.5*( node(n1).x + node(n2).x );
     ym = 0.5*( node(n1).y + node(n2).y );
     
-    edge(d).dav = 0;
+    edge(d).dav = [0;0];
     
     % Contribution from the left element
     if (e1 > 0)
@@ -435,8 +428,8 @@ end
 % Loop over edges and distribute the node numbers:
 for d = 1:nedges
     % Basic data
-    n1 = edge(d).nodes(1);
-    n2 = edge(d).nodes(2);
+    n1 = edge(d).n1;
+    n2 = edge(d).n2;
     
     % (1) Add node1 to the neighbor list of n2
     node(n1).nnghbrs = node(n1).nnghbrs + 1;
@@ -456,21 +449,21 @@ end
 %    bound(:).bfn    = Magnitude of (bfnx,bfny)
 %    bound(:).belm   = Element to which the boundary face belongs
 
-nbound = 5;	% Number of boundary segments
-bound(1).nbnodes = numel(BC.inflow);
-bound(2).nbnodes = numel(BC.bottomwall);
-bound(3).nbnodes = numel(BC.outflow);
-bound(4).nbnodes = numel(BC.topwall);
+nbound = 4;	% Number of boundary segments
+bound(1).nbnodes = numel(BC.left);
+bound(2).nbnodes = numel(BC.bottom);
+bound(3).nbnodes = numel(BC.right);
+bound(4).nbnodes = numel(BC.top);
 
-bound(1).bnode = flipud(BC.inflow);
-bound(2).bnode = BC.bottomwall;
-bound(3).bnode = BC.outflow;
-bound(4).bnode = flipud(BC.topwall);
+bound(1).bnode = flipud(BC.left);
+bound(2).bnode = BC.bottom;
+bound(3).bnode = BC.right;
+bound(4).bnode = flipud(BC.top);
 
-bound(1).bname = 'freestream';
-bound(2).bname = 'outflow_supersonic';
-bound(3).bname = 'outflow_supersonic';
-bound(4).bname = 'slip_wall';
+bound(1).bname = 'Neumann';
+bound(2).bname = 'Neumann';
+bound(3).bname = 'Neumann';
+bound(4).bname = 'Neumann';
 
 % Boundary normal at nodes constructed by accumulating the contribution
 % from each boundary face normal. This vector will be used to enforce
@@ -603,7 +596,6 @@ for i = 1:nbound
                 vt1 = elem(ielm).v(in); vt2 = elem(ielm).v(im); %disp([vt1,vt2]);
                 if (vt1 == v1 && vt2 == v2); found = true; break; end
             end
-            
             if (found); break; end
         end
         if (found)
@@ -634,7 +626,7 @@ end
        imin = 1;
        imax = 1;
 
- for i = 2:nN
+for i = 2:nN
    ave_nghbr = ave_nghbr + node(i).nnghbrs;
    if (node(i).nnghbrs < min_nghbr); imin = i; end
    if (node(i).nnghbrs > max_nghbr); imax = i; end
@@ -648,8 +640,219 @@ end
   fprintf('\n');
 
 % Now, compute the inverse of the LSQ matrix at each node.
-
 for i = 1:nN
     node(i).invAtA = LSQinvMat2d(node(i).x,node(i).y,i,...
         [node(node(i).nghbr).x],[node(node(i).nghbr).y]);
 end
+
+%% Cell centered scheme data
+% Find the edges of each element
+for e = 1:nE
+    elem(e).edge( elem(e).nnghbrs )=0;
+end
+
+for i = 1:nedges
+    e1 = edge(i).e1;
+    e2 = edge(i).e2;
+    
+    % Left element
+    if (e1 > 0)
+        for k = 1:elem(e1).nnghbrs
+            if (elem(e1).nghbr(k)==e2)
+                elem(e1).edge(k)=i;
+            end
+        end
+    end
+    
+    % Right element
+    if (e2 > 0)
+        for k = 1:elem(e2).nnghbrs
+            if (elem(e2).nghbr(k)==e1)
+                elem(e2).edge(k)=i;
+            end
+        end
+    end
+end
+
+% Face-data for cell-centered (edge-based) scheme.
+%
+% Loop over elements 4
+% Construct face data:
+% face is an edge across elements pointing
+% element e1 to element e2 (e2 > e1):
+%
+%       e2
+%        \    
+%         \ face: e1 -> e2 
+%          \
+%  n1 o--------------o n2 <-- face
+%            \
+%             \          n1, n2: end nodes of the face
+%              \         e1: element 1
+%              e1        e2: element 2  (e2 > e1)
+%
+% Note: Face data is dual to the edge data.
+%       It can be trivially constructed from the edge data, but
+%       here the face data is constructed by using the element
+%       neighbor data just for an educational purpose.
+
+% Count the total number of faces
+nF = 0;
+for e = 1:nE
+    for k = 1:elem(e).nnghbrs
+        kelem = elem(e).nghbr(k);
+        if (kelem > e)
+            nF = nF + 1;
+        end
+    end
+end
+
+% allocate face data
+face(nF).e1 = 0;
+face(nF).e2 = 0;
+face(nF).n1 = 0;
+face(nF).n2 = 0;
+
+nF = 0;
+for i = 1:nE
+    for k = 1:elem(i).nnghbrs
+        kelem = elem(i).nghbr(k);
+        if (kelem > i)
+            % Update face counter
+            nF = nF + 1;
+            
+            face(nF).e1 = i;
+            face(nF).e2 = kelem;
+            
+            iedge = elem(i).edge(k);
+            v1 = edge(iedge).n1;
+            v2 = edge(iedge).n2;
+            
+            if (edge(iedge).e1 == kelem)
+                face(nF).n1 = v1;
+                face(nF).n2 = v2;
+            else
+                face(nF).n1 = v2;
+                face(nF).n2 = v1;
+            end
+        elseif (kelem == 0)
+            % Skip boundary faces.
+        end
+    end
+end
+
+% Loop over faces and construct directed area vector (dav).
+for i = 1:nF
+    n1 = face(i).n1;
+    n2 = face(i).n2;
+
+    % Face vector
+    face(i).dav(1) = -( node(n2).y - node(n1).y );
+    face(i).dav(2) =    node(n2).x - node(n1).x;
+    face(i).da     = sqrt( face(i).dav(1)^2 + face(i).dav(2)^2 );
+    face(i).dav    = face(i).dav / face(i).da;
+end
+
+% Construct vertex-neighbor data for cell-centered scheme.
+%
+% For each element, i, collect all elements sharing the nodes
+% of the element, i, including face-neighors.
+%
+%      ___________
+%     |     |     |
+%     |  o  |  o  |
+%     |_____*_____|
+%    /\    / \    \
+%   / o\ o/ i \  o \
+%  /    \/     \    \
+%  -----*-------*----\
+%  \   /       / \    \
+%   \o/  o    / o \ o  \
+%    V_______/_____\____\
+%
+%          i: Element of interest
+%          o: Vertex neighbors (k = 1,2,...,9)
+
+% for i = 1:nelms
+%     elem(i).nvnghbrs = 1;
+%     call my_alloc_int_ptr(elm(i).vnghbr, 1)
+% end
+% 
+% %   ave_nghbr = 0;
+% %   min_nghbr = 10000;
+% %   max_nghbr =-10000;
+% %        imin = 1;
+% %        imax = 1;
+% 
+% % Initialization
+% for i = 1:nelms
+%    elem(i).nvnghbrs = 0;
+% end
+% 
+% % Collect vertex-neighbors
+% for i = 1:nelms
+%     
+%     % 1. Add face-neighbors
+%     for k = 1:elem(i).nnghbrs
+%         if ( elem(i).nghbr(k) > 0 )
+%             elem(i).nvnghbrs = elem(i).nvnghbrs + 1;
+%             call my_alloc_int_ptr(elm(i).vnghbr, elm(i).nvnghbrs);
+%             elem(i).vnghbr(elem(i).nvnghbrs) = elem(i).nghbr(k);
+%         end
+%     end
+%     
+%     % 2. Add vertex-neighbors
+%     for k = 1:elem(i).nvtx
+%         v1 = elem(i).vtx(k);
+%         
+%         for j = 1:node(v1).nelms
+%             e1 = node(v1).elm(j);
+%             if (e1 == i) cycle velms
+%                 % Check if the element is already added.
+%                 found = false;
+%                 for ii = 1:elem(i).nvnghbrs
+%                     if ( e1 == elem(i).vnghbr(ii) )
+%                         found = true;
+%                         return
+%                     end
+%                 end
+%                 % Add the element, e1, if not added yet.
+%                 if ~found % not found
+%                     elem(i).nvnghbrs = elem(i).nvnghbrs + 1;
+%                     call my_alloc_int_ptr(elm(i).vnghbr, elm(i).nvnghbrs);
+%                     elem(i).vnghbr(elem(i).nvnghbrs) = e1;
+%                 end
+%             end
+%         end
+%         
+%         % ave_nghbr = ave_nghbr + elem(i).nvnghbrs;
+%         % if (elem(i).nvnghbrs < min_nghbr), imin = i; end
+%         % if (elem(i).nvnghbrs > max_nghbr), imax = i; end
+%         % min_nghbr = min(min_nghbr, elem(i).nvnghbrs);
+%         % max_nghbr = max(max_nghbr, elem(i).nvnghbrs);
+%         %     if (elm(i).nvnghbrs < 3)
+%         %         write(*,*) "--- Not enough neighbors: elm = ", i, &
+%         %         "elm(i)%nvnghbrs=",elm(i)%nvnghbrs
+%         %     end
+%     end
+% end
+% 
+% %write(*,*) "      ave_nghbr = ", ave_nghbr/nelms
+% %write(*,*) "      min_nghbr = ", min_nghbr, " elm = ", imin
+% %write(*,*) "      max_nghbr = ", max_nghbr, " elm = ", imax
+% %write(*,*)
+% 
+%
+
+% Boundary
+% for e = 1:nE
+%     elem(e).bmark = 0;
+% end
+% 
+% for i = 1:nbound
+%     if (trim(bound(i).bc_type) == 'dirichlet')
+%         for j = 1:bound(i).nbfaces
+%             elem( bound(i).belm(j) ).bmark = 1;
+%         end
+%     end
+% end

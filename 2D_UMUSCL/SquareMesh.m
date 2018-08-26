@@ -1,4 +1,4 @@
-function [vx,vy,EtoV,nE,nN,BC] = SquareMesh_v2(Etype)
+function [vx,vy,EtoV,nE,nN,BC]=SquareMesh(xmin,xmax,ymin,ymax,Etype,nx,ny)
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %           2D quad and triangular grids in a rectangular domain.
@@ -57,13 +57,13 @@ function [vx,vy,EtoV,nE,nN,BC] = SquareMesh_v2(Etype)
 % ymin --------------------------------------
 %    xmin                                  xmax
 
-nx   = 11;     % Number of nodes in x-direction
-ny   = 11;     % Number of nodes in y-direction
-xmin = 0;       % x-coordinate of the left end
-xmax = 1;       % x-coordinate of the right end
-ymin = 0;       % y-coordinates of the bottom
-ymax = 1;       % y-coordinates of the top
-%Etype = 'QUAD';  % TRI or QUAD
+%nx   = 11;     % Number of nodes in x-direction
+%ny   = 11;     % Number of nodes in y-direction
+%xmin = 0;       % x-coordinate of the left end
+%xmax = 1;       % x-coordinate of the right end
+%ymin = 0;       % y-coordinates of the bottom
+%ymax = 1;       % y-coordinates of the top
+%Etype= 'QUAD';  % TRI, QUAD or MIXED
 nN   = nx*ny;   % total number of nodesl
 
 % 2. Generate a structured 2D grid data, (i,j) data: go up in y-direction%
@@ -211,38 +211,39 @@ end
 %
 %  Example: nx=ny=7
 %
-%   in = inflow
-%    w = wall
-%    e = outflow
-%    o = interior nodes
-%  inw = this node belongs to both inflow and wall boundaries.
-%   we = this node belongs to both wall and outflow boundaries.
+%    l = left,
+%    r = right,
+%    t = top,
+%    b = bottom,
+%    o = interior nodes,
+%   lb = this node belongs to both left and bottom boundaries,
+%   lt = this node belongs to both left and top boundaries.
 %
-%   inw----w----w----w----w----w----we
+%    lt----t----t----t----t----t----tr
 %     |    |    |    |    |    |    |
-%    in----o----o----o----o----o----e
+%     l----o----o----o----o----o----r
 %     |    |    |    |    |    |    |
-%    in----o----o----o----o----o----e
+%     l----o----o----o----o----o----r
 %     |    |    |    |    |    |    |
-%    in----o----o----o----o----o----e
+%     l----o----o----o----o----o----r
 %     |    |    |    |    |    |    |
-%    in----o----o----o----o----o----e
+%     l----o----o----o----o----o----r
 %     |    |    |    |    |    |    |
-%    in----o----o----o----o----o----e
+%     l----o----o----o----o----o----r
 %     |    |    |    |    |    |    |
-%   inw----w----w----w----w----w----we
+%    lb----b----b----b----b----b----br
 %
 % allocate
-BC.inflow     = zeros(ny,1);
-BC.bottomwall = zeros(nx,1);
-BC.outflow    = zeros(ny,1);
-BC.topwall    = zeros(nx,1);
+BC.left   = zeros(ny,1);
+BC.bottom = zeros(nx,1);
+BC.right  = zeros(ny,1);
+BC.top    = zeros(nx,1);
 
 % Boundary nodes are ordered counterclockwise 
-i= 1; for j=1:ny; inode=j+(i-1)*ny; BC.inflow(j)=inode; end     % inflow
-j= 1; for i=1:nx; inode=j+(i-1)*ny; BC.bottomwall(i)=inode; end    % bottom outflow
-i=nx; for j=1:ny; inode=j+(i-1)*ny; BC.outflow(j)=inode; end	% right outflow
-j=ny; for i=1:nx; inode=j+(i-1)*ny; BC.topwall(i)=inode; end    % top wall
+i= 1; for j=1:ny; inode=j+(i-1)*ny; BC.left(j)=inode;   end	% left
+j= 1; for i=1:nx; inode=j+(i-1)*ny; BC.bottom(i)=inode; end % bottom
+i=nx; for j=1:ny; inode=j+(i-1)*ny; BC.right(j)=inode;  end	% right
+j=ny; for i=1:nx; inode=j+(i-1)*ny; BC.top(i)=inode;    end	% top
 
 %% visual verification
 % Plot Element as patches

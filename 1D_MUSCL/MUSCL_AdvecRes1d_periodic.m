@@ -20,7 +20,7 @@ for j = 1:size(qi,2) % for all internal faces
     switch limiter
         case 'MC',dq(j) = minmod([2*dqR(j),2*dqL(j),dqC(j)]); % MC limiter: Find dq_j = minmod{fwd diff, bwd diff, cntrl diff}
         case 'MM',dq(j) = minmod([dqR(j),dqL(j)]); % Minmod limiter: Find dq_j = minmod{fwd diff, bwd diff}
-        case 'VA',dq(j) = vanalbada(dqR(j),dqL(j),dx); % Van Albada limiter.
+        case 'VA',dq(j) = vanAlbada(dqR(j),dqL(j),dx); % Van Albada limiter.
         otherwise, error('limiter not listed!');
     end
 end
@@ -47,7 +47,7 @@ function mm = minmod(v)
     if abs(s)==1; mm = s*min(abs(v(:))); else, mm=0; end
 end
 
-function va = vanalbada(da,db,h)
+function va = vanAlbada(da,db,h)
     % Van Albada Slope Limiter Function
     % vanAlbada: extend the simetric formulation of the van leer limiter
     eps2=(0.3*h)^3; 

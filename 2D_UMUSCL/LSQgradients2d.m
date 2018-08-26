@@ -1,7 +1,7 @@
 function gradw = LSQgradients2d(xi,yi,wi,xk,yk,wk,invA)
 %**************************************************************************
 % Given the primitive variables at k-nodes around node i, this computes the 
-% gradients (wx,wy) at node j by the unweighted least-squares method.
+% gradients (wx,wy) at node i by the unweighted least-squares method.
 %
 % -------------------------------------------------------------------------
 %  Input:    w  = current primitive variables at node 'inode'

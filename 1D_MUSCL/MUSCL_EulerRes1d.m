@@ -38,7 +38,7 @@ function [res] = MUSCL_EulerRes1d(q,smax,gamma,dx,N,limiter,fluxMethod)
                 case 'VA' % Van Albada limiter
                     dqR = (q(i,j+1) - q(i,j));%/dx;
                     dqL = (q(i,j) - q(i,j-1));%/dx;
-                    dq(i,j) = vanalbada(dqR,dqL,dx);
+                    dq(i,j) = vanAlbada(dqR,dqL,dx);
             end
         end
     end
@@ -118,7 +118,7 @@ function mm = minmod(v)
     if abs(s)==1; mm = s*min(abs(v(:))); else, mm=0; end
 end
 
-function va = vanalbada(da,db,h)
+function va = vanAlbada(da,db,h)
     % Van Albada Slope Limiter Function
     % vanAlbada: extend the simetric formulation of the van leer limiter
     eps2=(0.3*h)^3; 

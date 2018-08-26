@@ -50,7 +50,7 @@ function invAtA = LSQinvMat2d(xi,yi,ni,xk,yk)
 %  Input:    nk  = k neigbour nodes ids
 %  Input:    ni  = current node id
 %  Input:  xk,yk = neigbour nodes coordinates
-%  Input:  xk,yk = current node coordinates
+%  Input:  xi,yi = current node coordinates
 % Output: invAtA = inverse matrix for LSQ reconstruction for current node
 % -------------------------------------------------------------------------
 %

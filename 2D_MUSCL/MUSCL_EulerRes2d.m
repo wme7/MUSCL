@@ -64,10 +64,10 @@ function [res] = MUSCL_EulerRes2d(q,smax,gamma,dx,dy,N,M,limiter,fluxMethod)
                         % Find dq_j = minmod{fwd diff, bwd diff}
                         dqw = (cell(i, j ).q(k) - cell(i,j-1).q(k))/dx; % du btn j and j-1
                         dqe = (cell(i,j+1).q(k) - cell(i, j ).q(k))/dx; % du btn j+1 and j
-                        cell(i,j).dqdx(k) = vanalbada(dqw,dqe,dx);
+                        cell(i,j).dqdx(k) = vanAlbada(dqw,dqe,dx);
                         dqs = (cell( i ,j).q(k) - cell(i-1,j).q(k))/dy; % du btn i and i-1
                         dqn = (cell(i+1,j).q(k) - cell( i ,j).q(k))/dy; % du btn i+1 and i
-                        cell(i,j).dqdy(k) = vanalbada(dqs,dqn,dy);
+                        cell(i,j).dqdy(k) = vanAlbada(dqs,dqn,dy);
                 end
             end
         end
@@ -224,7 +224,7 @@ function mm = minmod(v)
     %if(~isempty(ids)); mm(ids)=s(ids).*min(abs(v(ids,:)),[],2); end
 end
 
-function va = vanalbada(da,db,h)
+function va = vanAlbada(da,db,h)
     % Van Albada Slope Limiter Function
     % vanAlbada: extend the simetric formulation of the van leer limiter
     eps2=(0.3*h)^3; 

@@ -25,7 +25,7 @@ for j = 2:N-1
         case 'VA'
             a = (u(j+1) - u(j))/dx;
             b = (u(j) - u(j-1))/dx;
-            du(j) = vanalbada(a,b,dx);
+            du(j) = vanAlbada(a,b,dx);
     end
     
     % Build p-w cell reconstructions
@@ -44,7 +44,7 @@ a = max(abs(dflux(u)));
 % Compute Fj+1/2 and Fj-1/2
 for j = 2:N-1
     
-    % Apply L-W Flux Function
+    % Apply L-F Flux Function
     Fp(j) = 1/2*((flux(up(j))+flux(um(j+1))) - a*(um(j+1)-up(j))); % Fj+1/2
     Fm(j) = 1/2*((flux(up(j-1))+flux(um(j))) - a*(um(j)-up(j-1))); % Fj-1/2
     
@@ -67,7 +67,7 @@ function mm = minmod(v)
     if abs(s)==1; mm = s*min(abs(v(:))); else, mm=0; end
 end
 
-function va = vanalbada(da,db,h)
+function va = vanAlbada(da,db,h)
     % Van Albada Slope Limiter Function
     % vanAlbada: extend the simetric formulation of the van leer limiter
     eps2=(0.3*h)^3; 
